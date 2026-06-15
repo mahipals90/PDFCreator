@@ -15,8 +15,11 @@
         .draggable-card { transition: transform 0.2s ease, opacity 0.2s ease; cursor: grab; }
         .draggable-card:active { cursor: grabbing; }
         .drag-over { border: 2px dashed #4f46e5 !important; background-color: #f5f3ff !important; opacity: 0.6; }
-        /* Instant flash and smooth fade optimization for the green tick feedback loop */
-        .flash-overlay { transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Green Flash Tick Animations */
+        .tick-overlay {
+            transition: opacity 0.2s ease-in-out, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
@@ -46,19 +49,19 @@
             <div class="relative bg-slate-900 rounded-xl overflow-hidden doc-aspect w-full flex items-center justify-center border border-slate-800 shadow-inner group">
                 <video id="video" autoplay playsinline class="absolute inset-0 w-full h-full object-cover"></video>
                 
-                <div id="capture-flash" class="flash-overlay absolute inset-0 bg-emerald-600/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center opacity-0 pointer-events-none">
-                    <div class="bg-white text-emerald-600 p-4 rounded-full shadow-lg scale-75 transform transition-transform duration-300" id="flash-tick-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                </div>
-
                 <div class="absolute inset-6 border border-white/20 pointer-events-none rounded flex items-center justify-center">
                     <div class="w-8 h-8 border-t-2 border-l-2 border-indigo-400 absolute top-0 left-0"></div>
                     <div class="w-8 h-8 border-t-2 border-r-2 border-indigo-400 absolute top-0 right-0"></div>
                     <div class="w-8 h-8 border-b-2 border-l-2 border-indigo-400 absolute bottom-0 left-0"></div>
                     <div class="w-8 h-8 border-b-2 border-r-2 border-indigo-400 absolute bottom-0 right-0"></div>
+                </div>
+
+                <div id="capture-tick" class="tick-overlay absolute inset-0 flex items-center justify-center bg-emerald-950/40 opacity-0 pointer-events-none scale-75 z-20 backdrop-blur-[1px]">
+                    <div class="bg-white text-emerald-600 p-5 rounded-full shadow-2xl border-4 border-emerald-500 transform transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
                 </div>
 
                 <div id="camera-fallback" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-slate-400 bg-slate-900 hidden z-10">
@@ -163,10 +166,7 @@
         const btnSaveText = document.getElementById('btn-save-text');
         const loadingSpinner = document.getElementById('loading-spinner');
         const renderSandbox = document.getElementById('render-sandbox');
-        
-        // Visual Confirmation Overlay Elements
-        const captureFlash = document.getElementById('capture-flash');
-        const flashTickIcon = document.getElementById('flash-tick-icon');
+        const captureTick = document.getElementById('capture-tick');
 
         // Functional State Arrays Configuration
         let pagesArray = []; 
@@ -195,25 +195,16 @@
         }
         initCamera();
 
-        // Trigger Flash UI Sequence Helper
-        function triggerSuccessFlash() {
-            // Force reset classes to render elements active instantly
-            captureFlash.classList.remove('opacity-0', 'pointer-events-none');
-            captureFlash.classList.add('opacity-100');
-            flashTickIcon.classList.remove('scale-75');
-            flashTickIcon.classList.add('scale-100');
+        // Flash Green Indicator Function Block
+        function flashSuccessTick() {
+            // Unhide overlay smoothly and scale it into place
+            captureTick.classList.remove('opacity-0', 'scale-75', 'pointer-events-none');
+            captureTick.classList.add('opacity-100', 'scale-100');
 
-            // Set precise timer block to turn off UI indicators (400ms is standard for swift UI updates)
+            // Hold frame configuration for 400 milliseconds before backing out gracefully
             setTimeout(() => {
-                captureFlash.classList.remove('opacity-100');
-                captureFlash.classList.add('opacity-0');
-                flashTickIcon.classList.remove('scale-100');
-                flashTickIcon.classList.add('scale-75');
-                
-                // Block touch interactions once animation drops safely
-                setTimeout(() => {
-                    captureFlash.classList.add('pointer-events-none');
-                }, 200);
+                captureTick.classList.remove('opacity-100', 'scale-100');
+                captureTick.classList.add('opacity-0', 'scale-75', 'pointer-events-none');
             }, 400);
         }
 
@@ -221,8 +212,8 @@
         btnCapture.addEventListener('click', () => {
             if (video.paused || video.ended) return;
             
-            // Fire the macrosecond green success indicator right away
-            triggerSuccessFlash();
+            // Trigger visual feedback flash instantly
+            flashSuccessTick();
 
             const canvas = document.createElement('canvas');
             
@@ -333,7 +324,6 @@
         window.handleDrop = function(e, targetIndex) {
             e.stopPropagation();
             if (dragSourceIndex !== targetIndex) {
-                // Mutate indices arrays mapping layout modifications accurately
                 const movingNode = pagesArray[dragSourceIndex];
                 pagesArray.splice(dragSourceIndex, 1);
                 pagesArray.splice(targetIndex, 0, movingNode);
@@ -368,7 +358,6 @@
                 card.className = "bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col draggable-card group relative";
                 card.setAttribute('draggable', 'true');
                 
-                // Binding native Drag Event Listeners directly to standard scope handles
                 card.setAttribute('ondragstart', `handleDragStart(event, ${index})`);
                 card.setAttribute('ondragover', `handleDragOver(event)`);
                 card.setAttribute('ondragenter', `handleDragEnter(event)`);
@@ -438,14 +427,13 @@
                     renderSandbox.appendChild(sandboxedPage);
 
                     const canvas = await html2canvas(sandboxedPage, {
-                        scale: 2, // 2x scale mapping configuration yields print-ready 300DPI crisp rendering balances
+                        scale: 2, 
                         useCORS: true,
                         logging: false,
                         backgroundColor: '#ffffff'
                     });
 
                     renderSandbox.removeChild(sandboxedPage);
-                    // Standardizing down matching matrix compression scales factor (.75 preserves clear text boundaries with lightweight sizes)
                     const optimizedImgData = canvas.toDataURL('image/jpeg', 0.75);
                     pdf.addImage(optimizedImgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
                 }
@@ -458,7 +446,7 @@
 
             } catch (error) {
                 console.error("Critical rendering execution engine error: ", error);
-                alert("An unexpected layout array bounds error occurred during runtime canvas extraction workflows.");
+                alert("An unexpected layout error occurred during runtime rendering workflows.");
             } finally {
                 btnSavePdf.disabled = false;
                 loadingSpinner.classList.add('hidden');
