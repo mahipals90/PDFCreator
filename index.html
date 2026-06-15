@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Multi-Page PDF Scanner</title>
+    <title>Professional Document Scanner Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* Hidden file inputs */
         .hidden-input { display: none; }
-        /* Aspect ratio sizing matching standard A4 shape for thumbnails */
-        .a4-aspect { aspect-ratio: 1 / 1.4142; }
+        /* Strict document aspect ratio framework (A4/Legal Ratio ~1:1.414) */
+        .doc-aspect { aspect-ratio: 1 / 1.4142; }
+        /* Smooth transitions for drag and drop interactions */
+        .draggable-card { transition: transform 0.2s ease, opacity 0.2s ease; cursor: grab; }
+        .draggable-card:active { cursor: grabbing; }
+        .drag-over { border: 2px dashed #4f46e5 !important; background-color: #f5f3ff !important; opacity: 0.6; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
@@ -24,9 +27,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight text-slate-900">HD Document Scanner</h1>
+                <h1 class="text-xl font-bold tracking-tight text-slate-900">HD Document Scanner PRO</h1>
             </div>
-            <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full uppercase tracking-wider">Web Engine v2.0</span>
+            <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full uppercase tracking-wider">Engine v2.5</span>
         </div>
     </header>
 
@@ -35,17 +38,25 @@
         <section class="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-4 h-fit sticky lg:top-24">
             <div class="flex items-center space-x-2 pb-2 border-b border-slate-100">
                 <span class="flex items-center justify-center bg-indigo-600 text-white rounded-full h-6 w-6 text-xs font-bold">1</span>
-                <h2 class="text-lg font-semibold text-slate-900">Capture or Upload</h2>
+                <h2 class="text-lg font-semibold text-slate-900">Document Scan Viewport</h2>
             </div>
             
-            <div class="relative bg-slate-900 rounded-xl overflow-hidden aspect-video flex items-center justify-center border border-slate-800 shadow-inner">
-                <video id="video" autoplay playsinline class="w-full h-full object-cover"></video>
-                <div id="camera-fallback" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center text-slate-400 bg-slate-900 hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="relative bg-slate-900 rounded-xl overflow-hidden doc-aspect w-full flex items-center justify-center border border-slate-800 shadow-inner group">
+                <video id="video" autoplay playsinline class="absolute inset-0 w-full h-full object-cover"></video>
+                
+                <div class="absolute inset-6 border border-white/20 pointer-events-none rounded flex items-center justify-center">
+                    <div class="w-8 h-8 border-t-2 border-l-2 border-indigo-400 absolute top-0 left-0"></div>
+                    <div class="w-8 h-8 border-t-2 border-r-2 border-indigo-400 absolute top-0 right-0"></div>
+                    <div class="w-8 h-8 border-b-2 border-l-2 border-indigo-400 absolute bottom-0 left-0"></div>
+                    <div class="w-8 h-8 border-b-2 border-r-2 border-indigo-400 absolute bottom-0 right-0"></div>
+                </div>
+
+                <div id="camera-fallback" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-slate-400 bg-slate-900 hidden z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                    <p class="text-sm font-medium">Camera unavailable or blocked</p>
-                    <p class="text-xs text-slate-500 mt-1">Please use the file upload route or verify HTTPS.</p>
+                    <p class="text-sm font-medium text-white">Camera context blocked or unavailable</p>
+                    <p class="text-xs text-slate-400 mt-2 max-w-xs">Please fallback to local system file upload or verify network secure HTTPS protocols.</p>
                 </div>
             </div>
 
@@ -55,14 +66,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         <circle cx="12" cy="13" r="3" />
                     </svg>
-                    <span>Snap Photo</span>
+                    <span>Scan Page</span>
                 </button>
                 
                 <button id="btn-upload-trigger" class="flex items-center justify-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 px-4 rounded-xl transition-all border border-slate-200">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
-                    <span>Upload File</span>
+                    <span>Import File</span>
                 </button>
             </div>
             
@@ -73,21 +84,23 @@
         <section class="lg:col-span-7 flex flex-col space-y-6">
             
             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex-grow">
-                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 mb-4 gap-2">
                     <div class="flex items-center space-x-2">
                         <span class="flex items-center justify-center bg-indigo-600 text-white rounded-full h-6 w-6 text-xs font-bold">2</span>
-                        <h2 class="text-lg font-semibold text-slate-900">Document Structure</h2>
+                        <h2 class="text-lg font-semibold text-slate-900">Document Page Order</h2>
                     </div>
-                    <span id="page-count" class="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">0 Pages Added</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-[11px] text-amber-600 font-medium bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">💡 Drag pages to rearrange order</span>
+                        <span id="page-count" class="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">0 Pages</span>
+                    </div>
                 </div>
 
-                <div id="gallery-empty" class="py-16 text-center text-slate-400 flex flex-col items-center justify-center">
+                <div id="gallery-empty" class="py-24 text-center text-slate-400 flex flex-col items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m-2-2h4" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                     </svg>
-                    <p class="text-sm font-medium">No pages compiled yet</p>
-                    <p class="text-xs text-slate-400 max-w-xs mt-1">Capture or upload images. They will appear here formatted as document pages.</p>
+                    <p class="text-sm font-medium">No pages mapped inside workspace</p>
+                    <p class="text-xs text-slate-400 max-w-xs mt-1">Scan or drop standard files down to construct individual compiler page frames.</p>
                 </div>
 
                 <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
@@ -96,12 +109,12 @@
             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-4">
                 <div class="flex items-center space-x-2 pb-2 border-b border-slate-100">
                     <span class="flex items-center justify-center bg-indigo-600 text-white rounded-full h-6 w-6 text-xs font-bold">3</span>
-                    <h2 class="text-lg font-semibold text-slate-900">Compile & Export Settings</h2>
+                    <h2 class="text-lg font-semibold text-slate-900">Compile & Engine Export Settings</h2>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                     <div class="md:col-span-7">
-                        <label for="filename-input" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">File Configuration Name</label>
+                        <label for="filename-input" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Document Output Name</label>
                         <div class="relative">
                             <input type="text" id="filename-input" placeholder="document" class="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-2.5 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
                             <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-xs font-medium text-slate-400">.pdf</span>
@@ -109,7 +122,7 @@
                     </div>
 
                     <div class="md:col-span-5">
-                        <button id="btn-save-pdf" class="w-full flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 px-4 rounded-xl shadow-sm transition-all focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <button id="btn-save-pdf" class="w-full flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 px-4 rounded-xl shadow-sm transition-all focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                             <svg id="loading-spinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -125,7 +138,7 @@
     <div id="render-sandbox" class="absolute top-0 left-0 pointer-events-none opacity-0" style="width: 595px;"></div>
 
     <script>
-        // DOM Elements Mapping
+        // DOM Workspace Element Registration Mapping
         const video = document.getElementById('video');
         const cameraFallback = document.getElementById('camera-fallback');
         const btnCapture = document.getElementById('btn-capture');
@@ -141,15 +154,16 @@
         const loadingSpinner = document.getElementById('loading-spinner');
         const renderSandbox = document.getElementById('render-sandbox');
 
-        // Main state store keeping track of order and contents of images
+        // Functional State Arrays Configuration
         let pagesArray = []; 
-        let targetRetakeIndex = null; 
+        let targetRetakeIndex = null;
+        let dragSourceIndex = null; // Drag and Drop Tracking Index Pointer
 
-        // Set fallback default name placeholder matching date format
+        // Setup File Name Fallback Date Tracking Configurations
         const todayStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
-        filenameInput.placeholder = `document_${todayStr}`;
+        filenameInput.placeholder = `scan_${todayStr}`;
 
-        // Initialize Camera Stream
+        // Initialize Native Camera Constraints Tracking Pipelines
         async function initCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -158,7 +172,7 @@
                 });
                 video.srcObject = stream;
             } catch (err) {
-                console.warn("Camera pipeline unavailable/blocked:", err);
+                console.warn("Camera execution blocked/unavailable safely caught:", err);
                 video.classList.add('hidden');
                 cameraFallback.classList.remove('hidden');
                 btnCapture.disabled = true;
@@ -167,55 +181,53 @@
         }
         initCamera();
 
-        // Canvas element processing helper
-        function createPageObject(dataUrl) {
-            return { id: crypto.randomUUID(), src: dataUrl };
-        }
-
-        // Add page item to tracking array and trigger refresh
-        function addPage(dataUrl) {
-            pagesArray.push(createPageObject(dataUrl));
-            renderGallery();
-        }
-
-        // Live Capture Handler
+        // Process Captured Frame explicitly scaled down into true document ratios (1:1.4142)
         btnCapture.addEventListener('click', () => {
             if (video.paused || video.ended) return;
             
             const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth || 1280;
-            canvas.height = video.videoHeight || 720;
+            
+            // Map aspect crop boundaries to enforce full viewport preservation profiles
+            const videoWidth = video.videoWidth || 1920;
+            const videoHeight = video.videoHeight || 1080;
+            
+            // For true A4 vertical scanning frames layout profiles: Target height = Width * 1.4142
+            let targetCanvasWidth = videoWidth;
+            let targetCanvasHeight = videoWidth * 1.4142;
+
+            // Constrain size loops tracking boundaries bounds
+            if (targetCanvasHeight > videoHeight) {
+                targetCanvasHeight = videoHeight;
+                targetCanvasWidth = videoHeight / 1.4142;
+            }
+
+            canvas.width = targetCanvasWidth;
+            canvas.height = targetCanvasHeight;
             
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // Extract center-cropped context maps to ensure no raw structural distortion shifts occur
+            const sx = (videoWidth - targetCanvasWidth) / 2;
+            const sy = (videoHeight - targetCanvasHeight) / 2;
             
-            // Standardizing compression layout to optimize quality ratios
+            ctx.drawImage(video, sx, sy, targetCanvasWidth, targetCanvasHeight, 0, 0, canvas.width, canvas.height);
+            
             const imgData = canvas.toDataURL('image/jpeg', 0.85);
             
-            if (targetRetakeIndex !== null) {
-                pagesArray[targetRetakeIndex].src = imgData;
-                targetRetakeIndex = null;
-                renderGallery();
-            } else {
-                addPage(imgData);
-            }
+            handleImageIngress(imgData);
         });
 
-        // Trigger Generic File Upload Choice
         btnUploadTrigger.addEventListener('click', () => {
             targetRetakeIndex = null;
             globalUpload.click();
         });
 
-        // Handle generic upload pipeline
         globalUpload.addEventListener('change', (e) => {
             processFile(e.target.files[0], (dataUrl) => {
-                addPage(dataUrl);
-                globalUpload.value = ''; // Reset target value
+                handleImageIngress(dataUrl);
+                globalUpload.value = '';
             });
         });
 
-        // Handle specific targeting index retakes
         retakeUpload.addEventListener('change', (e) => {
             if (targetRetakeIndex === null) return;
             processFile(e.target.files[0], (dataUrl) => {
@@ -226,7 +238,6 @@
             });
         });
 
-        // Standard FileReader processor wrapper
         function processFile(file, callback) {
             if (!file) return;
             const reader = new FileReader();
@@ -234,61 +245,114 @@
             reader.readAsDataURL(file);
         }
 
-        // Drop specified page index from the array
-        function deletePage(index) {
-            pagesArray.splice(index, 1);
+        function handleImageIngress(imgData) {
+            if (targetRetakeIndex !== null) {
+                pagesArray[targetRetakeIndex].src = imgData;
+                targetRetakeIndex = null;
+            } else {
+                pagesArray.push({ id: crypto.randomUUID(), src: imgData });
+            }
             renderGallery();
         }
 
-        // Set pointer and trigger capture logic context or file prompt window
-        function triggerRetake(index) {
+        window.deletePage = function(index) {
+            pagesArray.splice(index, 1);
+            renderGallery();
+        };
+
+        window.triggerRetake = function(index) {
             targetRetakeIndex = index;
-            // Detect if camera framework is online, otherwise route directly to upload alternate
             if (video.classList.contains('hidden')) {
                 retakeUpload.click();
             } else {
-                // Focuses viewport layout to top camera panel if user scrolls down on mobile
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                // Optional UI Hinting: Provide flashing indicator across video wrapper
                 video.parentElement.classList.add('ring-4', 'ring-amber-500');
-                setTimeout(() => video.parentElement.classList.remove('ring-4', 'ring-amber-500'), 1500);
+                setTimeout(() => video.parentElement.classList.remove('ring-4', 'ring-amber-500'), 1200);
             }
-        }
+        };
 
-        // UI Gallery Dom Synchronization Rendering Core
+        // --- Native HTML5 Drag and Drop Sorting Framework Matrix Implementation ---
+        window.handleDragStart = function(e, index) {
+            dragSourceIndex = index;
+            e.dataTransfer.effectAllowed = 'move';
+            e.currentTarget.classList.add('opacity-40');
+        };
+
+        window.handleDragOver = function(e) {
+            if (e.preventDefault) e.preventDefault();
+            return false;
+        };
+
+        window.handleDragEnter = function(e) {
+            e.currentTarget.classList.add('drag-over');
+        };
+
+        window.handleDragLeave = function(e) {
+            e.currentTarget.classList.remove('drag-over');
+        };
+
+        window.handleDrop = function(e, targetIndex) {
+            e.stopPropagation();
+            if (dragSourceIndex !== targetIndex) {
+                // Mutate indices arrays mapping layout modifications accurately
+                const movingNode = pagesArray[dragSourceIndex];
+                pagesArray.splice(dragSourceIndex, 1);
+                pagesArray.splice(targetIndex, 0, movingNode);
+                renderGallery();
+            }
+            return false;
+        };
+
+        window.handleDragEnd = function(e) {
+            e.currentTarget.classList.remove('opacity-40');
+            const items = galleryGrid.querySelectorAll('.draggable-card');
+            items.forEach(item => item.classList.remove('drag-over'));
+        };
+
+        // Sync State Models to Render Core Framework
         function renderGallery() {
             galleryGrid.innerHTML = '';
             
             if (pagesArray.length === 0) {
                 galleryEmpty.classList.remove('hidden');
-                pageCountBadge.textContent = "0 Pages Added";
+                pageCountBadge.textContent = "0 Pages";
                 btnSavePdf.disabled = true;
                 return;
             }
 
             galleryEmpty.classList.add('hidden');
             btnSavePdf.disabled = false;
-            pageCountBadge.textContent = `${pagesArray.length} ${pagesArray.length === 1 ? 'Page' : 'Pages'} Added`;
+            pageCountBadge.textContent = `${pagesArray.length} ${pagesArray.length === 1 ? 'Page' : 'Pages'}`;
 
             pagesArray.forEach((page, index) => {
                 const card = document.createElement('div');
-                card.className = "bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col group relative";
+                card.className = "bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col draggable-card group relative";
+                card.setAttribute('draggable', 'true');
+                
+                // Binding native Drag Event Listeners directly to standard scope handles
+                card.setAttribute('ondragstart', `handleDragStart(event, ${index})`);
+                card.setAttribute('ondragover', `handleDragOver(event)`);
+                card.setAttribute('ondragenter', `handleDragEnter(event)`);
+                card.setAttribute('ondragleave', `handleDragLeave(event)`);
+                card.setAttribute('ondrop', `handleDrop(event, ${index})`);
+                card.setAttribute('ondragend', `handleDragEnd(event)`);
                 
                 card.innerHTML = `
-                    <div class="absolute top-2 left-2 bg-slate-900/70 text-white backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded">
-                        PAGE ${index + 1}
+                    <div class="absolute top-2 left-2 bg-slate-900/70 text-white backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded z-10 flex items-center space-x-1">
+                        <span class="cursor-grab active:cursor-grabbing text-slate-400 font-normal">☰</span>
+                        <span>P. ${index + 1}</span>
                     </div>
-                    <div class="w-full a4-aspect bg-slate-200 overflow-hidden flex items-center justify-center border-b border-slate-200">
-                        <img src="${page.src}" class="w-full h-full object-cover">
+                    <div class="w-full doc-aspect bg-slate-100 overflow-hidden flex items-center justify-center border-b border-slate-200 relative">
+                        <img src="${page.src}" class="w-full h-full object-cover select-nonepointer-events-none">
                     </div>
-                    <div class="p-2 grid grid-cols-2 gap-1.5 bg-white">
-                        <button onclick="triggerRetake(${index})" class="text-[11px] font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 py-1.5 px-2 rounded-md transition-colors flex items-center justify-center space-x-1">
+                    <div class="p-2 grid grid-cols-2 gap-1.5 bg-white z-10">
+                        <button onclick="triggerRetake(${index})" class="text-[11px] font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 py-1.5 px-1 rounded-md transition-colors flex items-center justify-center space-x-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.253 8H18" />
                             </svg>
                             <span>Retake</span>
                         </button>
-                        <button onclick="deletePage(${index})" class="text-[11px] font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 py-1.5 px-2 rounded-md transition-colors flex items-center justify-center space-x-1">
+                        <button onclick="deletePage(${index})" class="text-[11px] font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 py-1.5 px-1 rounded-md transition-colors flex items-center justify-center space-x-1">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
@@ -300,20 +364,15 @@
             });
         }
 
-        // PDF Exporter Processing Chain (HD Canvas with strict output sizes)
+        // PDF Exporter Processing Loop Engine Architecture
         async function compileToPDF() {
             if (pagesArray.length === 0) return;
 
-            // Set loading interface state changes
             btnSavePdf.disabled = true;
             loadingSpinner.classList.remove('hidden');
-            btnSaveText.textContent = "Processing PDF...";
+            btnSaveText.textContent = "Compiling Layout...";
 
-            // Destructuring modern window instances target
             const { jsPDF } = window.jspdf;
-            
-            // Standard A4 dimensions sizing measurements in points (pt)
-            // A4 page setup: 595.28 pt x 841.89 pt
             const pdf = new jsPDF('p', 'pt', 'a4');
             const pdfWidth = 595.28;
             const pdfHeight = 841.89;
@@ -322,7 +381,6 @@
                 for (let i = 0; i < pagesArray.length; i++) {
                     if (i > 0) pdf.addPage();
 
-                    // Generate a pristine render template page strictly formatted to matching A4 dimensions inside hidden sandbox 
                     const sandboxedPage = document.createElement('div');
                     sandboxedPage.style.width = '595px';
                     sandboxedPage.style.height = '842px';
@@ -340,25 +398,19 @@
                     sandboxedPage.appendChild(innerImg);
                     renderSandbox.appendChild(sandboxedPage);
 
-                    // Execute High-DPI canvas capture (Scale: 2 provides high-res 300DPI matching print clarity)
                     const canvas = await html2canvas(sandboxedPage, {
-                        scale: 2, 
+                        scale: 2, // 2x scale mapping configuration yields print-ready 300DPI crisp rendering balances
                         useCORS: true,
                         logging: false,
                         backgroundColor: '#ffffff'
                     });
 
-                    // Remove item cleanly from dom sandbox tracking
                     renderSandbox.removeChild(sandboxedPage);
-
-                    // Encode into highly optimized high quality compressed JPEG block architecture (.75 threshold prevents heavy sizes)
+                    // Standardizing down matching matrix compression scales factor (.75 preserves clear text boundaries with lightweight sizes)
                     const optimizedImgData = canvas.toDataURL('image/jpeg', 0.75);
-
-                    // Render cleanly bounded within full A4 dimensions
                     pdf.addImage(optimizedImgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
                 }
 
-                // File saving operations calculations
                 let filename = filenameInput.value.trim();
                 if (!filename) filename = filenameInput.placeholder;
                 if (!filename.toLowerCase().endsWith('.pdf')) filename += '.pdf';
@@ -366,10 +418,9 @@
                 pdf.save(filename);
 
             } catch (error) {
-                console.error("Critical error occurring during compilation matrix operations: ", error);
-                alert("An error occurred during PDF compiling operations. Check developer logs.");
+                console.error("Critical rendering execution engine error: ", error);
+                alert("An unexpected layout array bounds error occurred during runtime canvas extraction workflows.");
             } finally {
-                // Restore primary CTA interface visibility patterns
                 btnSavePdf.disabled = false;
                 loadingSpinner.classList.add('hidden');
                 btnSaveText.textContent = "Generate PDF";
