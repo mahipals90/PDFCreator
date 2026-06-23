@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HD Scanner · Full‑Bleed PDF</title>
+    <title>HD Scanner · Smart Document Crop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -19,6 +19,10 @@
         .capture-area {
             background: #0b1120;
         }
+        /* No decorative borders inside capture frame */
+        .capture-frame {
+            border: none;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
@@ -31,9 +35,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight text-slate-900">HD Scanner · Full‑Bleed</h1>
+                <h1 class="text-xl font-bold tracking-tight text-slate-900">Smart Document Scanner</h1>
             </div>
-            <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full uppercase tracking-wider">v2.8</span>
+            <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full uppercase tracking-wider">auto‑crop v2</span>
         </div>
     </header>
 
@@ -44,7 +48,7 @@
             <div class="flex items-center space-x-2 pb-2 border-b border-slate-100">
                 <span class="flex items-center justify-center bg-indigo-600 text-white rounded-full h-6 w-6 text-xs font-bold">1</span>
                 <h2 class="text-lg font-semibold text-slate-900">Scan Viewport</h2>
-                <span class="ml-auto text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">auto‑crop</span>
+                <span class="ml-auto text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">document‑only</span>
             </div>
             
             <div class="relative bg-slate-900 rounded-xl overflow-hidden doc-aspect w-full flex items-center justify-center border border-slate-700 shadow-inner group capture-area">
@@ -73,7 +77,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         <circle cx="12" cy="13" r="3" />
                     </svg>
-                    <span>Scan & Crop</span>
+                    <span>Scan Document</span>
                 </button>
                 
                 <button id="btn-upload-trigger" class="flex items-center justify-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 px-4 rounded-xl transition-all border border-slate-200">
@@ -108,7 +112,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                     </svg>
                     <p class="text-sm font-medium">No pages yet</p>
-                    <p class="text-xs text-slate-400 max-w-xs mt-1">Scan or upload a document — auto‑crop will isolate the document area.</p>
+                    <p class="text-xs text-slate-400 max-w-xs mt-1">Scan or upload a document — only the document area will be captured.</p>
                 </div>
 
                 <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
@@ -202,13 +206,14 @@
                 }, 400);
             }
 
-            // ---------- CROP: document area only ----------
-            function captureDocumentArea() {
+            // ---------- CORE: capture ONLY the document area ----------
+            function captureDocumentOnly() {
                 if (video.paused || video.ended || !video.videoWidth) return null;
 
                 const vw = video.videoWidth;
                 const vh = video.videoHeight;
 
+                // 1. Grab frame data
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = vw;
                 tempCanvas.height = vh;
@@ -217,12 +222,13 @@
                 const imageData = ctx.getImageData(0, 0, vw, vh);
                 const data = imageData.data;
 
+                // 2. Find bounding box of non‑background content (document)
                 let minX = vw, minY = vh, maxX = 0, maxY = 0;
-                const threshold = 35;
-                const margin = 8;
+                const threshold = 30;    // luminance threshold for document vs background
+                const edgeMargin = 6;    // ignore extreme edges to avoid noise
 
-                for (let y = margin; y < vh - margin; y++) {
-                    for (let x = margin; x < vw - margin; x++) {
+                for (let y = edgeMargin; y < vh - edgeMargin; y++) {
+                    for (let x = edgeMargin; x < vw - edgeMargin; x++) {
                         const idx = (y * vw + x) * 4;
                         const lum = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
                         if (lum > threshold) {
@@ -234,6 +240,7 @@
                     }
                 }
 
+                // If no document found (all dark/empty), fallback to center crop with A4 ratio
                 if (maxX <= minX || maxY <= minY) {
                     let cropW = vw;
                     let cropH = vw * 1.4142;
@@ -246,7 +253,8 @@
                     return { sx, sy, cropW, cropH };
                 }
 
-                const pad = 6;
+                // Add small padding to avoid cutting text near edge
+                const pad = 4;
                 minX = Math.max(0, minX - pad);
                 minY = Math.max(0, minY - pad);
                 maxX = Math.min(vw, maxX + pad);
@@ -254,18 +262,23 @@
 
                 let cropW = maxX - minX;
                 let cropH = maxY - minY;
-                const aspectRatio = 1 / 1.4142;
+
+                // 3. Adjust to A4 aspect ratio (1:1.4142) while keeping document centered
+                const targetRatio = 1 / 1.4142; // width/height
                 let finalW = cropW;
                 let finalH = cropH;
 
-                if (cropW / cropH > aspectRatio) {
-                    finalH = cropW / aspectRatio;
+                if (cropW / cropH > targetRatio) {
+                    // too wide: adjust height
+                    finalH = cropW / targetRatio;
                     finalW = cropW;
                 } else {
-                    finalW = cropH * aspectRatio;
+                    // too tall: adjust width
+                    finalW = cropH * targetRatio;
                     finalH = cropH;
                 }
 
+                // Center the adjusted crop within the detected bounds
                 let sx = minX - (finalW - cropW) / 2;
                 let sy = minY - (finalH - cropH) / 2;
                 sx = Math.max(0, Math.min(vw - finalW, sx));
@@ -273,6 +286,7 @@
                 if (sx + finalW > vw) { finalW = vw - sx; }
                 if (sy + finalH > vh) { finalH = vh - sy; }
                 if (finalW < 10 || finalH < 10) {
+                    // fallback
                     let cropW2 = vw;
                     let cropH2 = vw * 1.4142;
                     if (cropH2 > vh) {
@@ -283,6 +297,7 @@
                     const sy2 = (vh - cropH2) / 2;
                     return { sx: sx2, sy: sy2, cropW: cropW2, cropH: cropH2 };
                 }
+
                 return { sx, sy, cropW: finalW, cropH: finalH };
             }
 
@@ -290,7 +305,7 @@
                 if (video.paused || video.ended || !video.videoWidth) return;
                 flashSuccessTick();
 
-                const rect = captureDocumentArea();
+                const rect = captureDocumentOnly();
                 if (!rect) return;
                 const { sx, sy, cropW, cropH } = rect;
 
@@ -441,7 +456,7 @@
                 });
             }
 
-            // ---------- PDF EXPORT: FULL BLEED (no white gap) ----------
+            // ---------- PDF EXPORT: FULL BLEED ----------
             async function compileToPDF() {
                 if (pagesArray.length === 0) return;
                 btnSavePdf.disabled = true;
@@ -457,7 +472,6 @@
                     for (let i = 0; i < pagesArray.length; i++) {
                         if (i > 0) pdf.addPage();
 
-                        // Create a wrapper that exactly matches PDF size, no padding.
                         const wrapper = document.createElement('div');
                         wrapper.style.width = pdfWidth + 'px';
                         wrapper.style.height = pdfHeight + 'px';
@@ -471,8 +485,6 @@
 
                         const img = document.createElement('img');
                         img.src = pagesArray[i].src;
-                        // Use 'cover' to fill the entire container without distortion,
-                        // ensuring no white gaps (image will be cropped if aspect differs)
                         img.style.width = '100%';
                         img.style.height = '100%';
                         img.style.objectFit = 'cover';
@@ -481,20 +493,16 @@
                         renderSandbox.appendChild(wrapper);
 
                         const canvas = await html2canvas(wrapper, {
-                            scale: 2.5,          // high quality
+                            scale: 2.5,
                             useCORS: true,
                             logging: false,
                             backgroundColor: '#ffffff',
                             width: pdfWidth,
-                            height: pdfHeight,
-                            onclone: (doc) => {
-                                // ensure no extra margins
-                            }
+                            height: pdfHeight
                         });
 
                         renderSandbox.removeChild(wrapper);
                         const data = canvas.toDataURL('image/jpeg', 0.82);
-                        // Add image to PDF with exact dimensions (no margin)
                         pdf.addImage(data, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
                     }
 
