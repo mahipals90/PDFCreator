@@ -6,158 +6,97 @@
     <title>Professional Document Scanner Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
+        /* Strict A4 Aspect Ratio: 1 / 1.4142 */
+        .doc-aspect { aspect-ratio: 1 / 1.4142; }
         .hidden-input { display: none; }
-        .draggable-card { transition: transform 0.2s ease, opacity 0.2s ease; cursor: grab; }
-        .draggable-card:active { cursor: grabbing; }
-        .drag-over { border: 2px dashed #4f46e5 !important; background-color: #f5f3ff !important; opacity: 0.6; }
-        .tick-overlay { transition: opacity 0.2s ease-in-out, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-6">
 
-    <header class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="bg-indigo-600 text-white p-2 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                </div>
-                <h1 class="text-xl font-bold tracking-tight text-slate-900">HD Document Scanner PRO</h1>
-            </div>
-            <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full uppercase tracking-wider">Engine v2.7</span>
-        </div>
-    </header>
-
-    <main class="max-w-6xl w-full mx-auto p-4 md:p-6 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <section class="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-4 h-fit sticky lg:top-24">
-            <div class="flex items-center space-x-2 pb-2 border-b border-slate-100">
-                <span class="flex items-center justify-center bg-indigo-600 text-white rounded-full h-6 w-6 text-xs font-bold">1</span>
-                <h2 class="text-lg font-semibold text-slate-900">Live Camera Feed</h2>
-            </div>
-            
-            <div class="relative bg-slate-900 rounded-xl overflow-hidden w-full aspect-video flex items-center justify-center border border-slate-800 shadow-inner group">
+    <main class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <section class="lg:col-span-5 space-y-4">
+            <div id="viewport" class="relative bg-slate-900 rounded-xl overflow-hidden doc-aspect w-full shadow-lg">
                 <video id="video" autoplay playsinline class="absolute inset-0 w-full h-full object-cover"></video>
-                
-                <div id="capture-tick" class="tick-overlay absolute inset-0 flex items-center justify-center bg-emerald-950/40 opacity-0 pointer-events-none scale-75 z-20 backdrop-blur-[1px]">
-                    <div class="bg-white text-emerald-600 p-5 rounded-full shadow-2xl border-4 border-emerald-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                </div>
-
-                <div id="camera-fallback" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-slate-400 bg-slate-900 hidden z-10">
-                    <p class="text-sm font-medium text-white">Camera unavailable</p>
-                </div>
             </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button id="btn-capture" class="flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-xl shadow-sm transition-all">
-                    <span>Scan Page</span>
-                </button>
-                <button id="btn-upload-trigger" class="flex items-center justify-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 px-4 rounded-xl transition-all border border-slate-200">
-                    <span>Import File</span>
-                </button>
-            </div>
-            <input type="file" id="global-upload" class="hidden-input" accept="image/*">
+            <button id="btn-capture" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all">
+                Capture A4 Page
+            </button>
         </section>
 
-        <section class="lg:col-span-7 flex flex-col space-y-6">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex-grow">
-                <div class="flex justify-between pb-4 border-b border-slate-100 mb-4">
-                    <h2 class="text-lg font-semibold text-slate-900">Document Workspace</h2>
-                    <span id="page-count" class="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">0 Pages</span>
-                </div>
-                <div id="gallery-empty" class="py-24 text-center text-slate-400">No pages mapped.</div>
-                <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
-            </div>
-
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <button id="btn-save-pdf" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-xl transition-all disabled:opacity-50" disabled>
-                    <span id="btn-save-text">Generate PDF</span>
-                </button>
-            </div>
+        <section class="lg:col-span-7">
+            <div id="gallery-grid" class="grid grid-cols-2 gap-4"></div>
+            <button id="btn-save-pdf" class="mt-6 w-full bg-slate-900 text-white font-bold py-4 rounded-xl hidden">
+                Generate PDF
+            </button>
         </section>
     </main>
-
-    <div id="render-sandbox" class="absolute top-0 left-0 pointer-events-none opacity-0" style="width: 595px;"></div>
 
     <script>
         const video = document.getElementById('video');
         const btnCapture = document.getElementById('btn-capture');
         const galleryGrid = document.getElementById('gallery-grid');
-        const galleryEmpty = document.getElementById('gallery-empty');
-        const pageCountBadge = document.getElementById('page-count');
         const btnSavePdf = document.getElementById('btn-save-pdf');
-        const captureTick = document.getElementById('capture-tick');
         let pagesArray = [];
 
+        // Initialize Camera
         async function initCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" }, audio: false 
-                });
-                video.srcObject = stream;
-            } catch (err) {
-                console.error("Camera access denied", err);
-            }
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" } 
+            });
+            video.srcObject = stream;
         }
         initCamera();
 
-        function flashSuccessTick() {
-            captureTick.classList.remove('opacity-0', 'scale-75', 'pointer-events-none');
-            captureTick.classList.add('opacity-100', 'scale-100');
-            setTimeout(() => {
-                captureTick.classList.remove('opacity-100', 'scale-100');
-                captureTick.classList.add('opacity-0', 'scale-75', 'pointer-events-none');
-            }, 400);
-        }
-
+        // Capture Logic with A4 Ratio Enforcement
         btnCapture.addEventListener('click', () => {
-            flashSuccessTick();
             const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            const ratio = 1 / 1.4142; // A4 Ratio
+            
+            // Logic: Capture the largest possible area matching the A4 ratio from the video
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            
+            let drawWidth = videoWidth;
+            let drawHeight = videoWidth / ratio;
+            
+            if (drawHeight > videoHeight) {
+                drawHeight = videoHeight;
+                drawWidth = videoHeight * ratio;
+            }
+
+            canvas.width = drawWidth;
+            canvas.height = drawHeight;
+            
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imgData = canvas.toDataURL('image/jpeg', 0.90);
-            pagesArray.push({ id: crypto.randomUUID(), src: imgData });
+            const sx = (videoWidth - drawWidth) / 2;
+            const sy = (videoHeight - drawHeight) / 2;
+            
+            ctx.drawImage(video, sx, sy, drawWidth, drawHeight, 0, 0, drawWidth, drawHeight);
+            
+            pagesArray.push(canvas.toDataURL('image/jpeg', 0.9));
             renderGallery();
         });
 
         function renderGallery() {
             galleryGrid.innerHTML = '';
-            if (pagesArray.length === 0) {
-                galleryEmpty.classList.remove('hidden');
-                btnSavePdf.disabled = true;
-                return;
-            }
-            galleryEmpty.classList.add('hidden');
-            btnSavePdf.disabled = false;
-            pageCountBadge.textContent = `${pagesArray.length} Page(s)`;
-
-            pagesArray.forEach((page, index) => {
-                const card = document.createElement('div');
-                card.className = "border border-slate-200 rounded-xl overflow-hidden shadow-sm";
-                card.innerHTML = `
-                    <img src="${page.src}" class="w-full h-40 object-cover">
-                    <div class="p-2 text-center text-xs text-slate-500">Page ${index + 1}</div>
-                `;
-                galleryGrid.appendChild(card);
+            pagesArray.forEach((src, index) => {
+                const img = document.createElement('img');
+                img.src = src;
+                img.className = "rounded-lg border shadow-sm doc-aspect w-full object-cover";
+                galleryGrid.appendChild(img);
             });
+            if(pagesArray.length > 0) btnSavePdf.classList.remove('hidden');
         }
 
-        btnSavePdf.addEventListener('click', async () => {
+        btnSavePdf.addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('p', 'pt', 'a4');
-            for (let i = 0; i < pagesArray.length; i++) {
-                if (i > 0) pdf.addPage();
-                pdf.addImage(pagesArray[i].src, 'JPEG', 0, 0, 595, 842);
-            }
-            pdf.save("document.pdf");
+            pagesArray.forEach((src, i) => {
+                if(i > 0) pdf.addPage();
+                pdf.addImage(src, 'JPEG', 0, 0, 595.28, 841.89);
+            });
+            pdf.save("scanned_document.pdf");
         });
     </script>
 </body>
