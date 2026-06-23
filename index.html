@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HD Document Scanner PRO · Auto-Crop</title>
+    <title>HD Scanner · Full‑Bleed PDF</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         .hidden-input { display: none; }
-        /* A4 aspect ratio (1:1.414) for preview & capture */
         .doc-aspect { aspect-ratio: 1 / 1.4142; }
         .draggable-card { transition: transform 0.2s ease, opacity 0.2s ease; cursor: grab; }
         .draggable-card:active { cursor: grabbing; }
@@ -17,11 +16,6 @@
         .tick-overlay {
             transition: opacity 0.2s ease-in-out, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        /* No border inside capture area — removed corner decorations */
-        .capture-frame {
-            border: none;
-        }
-        /* subtle shadow only, no inner brackets */
         .capture-area {
             background: #0b1120;
         }
@@ -37,9 +31,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight text-slate-900">HD Scanner PRO · Auto‑Crop</h1>
+                <h1 class="text-xl font-bold tracking-tight text-slate-900">HD Scanner · Full‑Bleed</h1>
             </div>
-            <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full uppercase tracking-wider">v2.7</span>
+            <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full uppercase tracking-wider">v2.8</span>
         </div>
     </header>
 
@@ -50,14 +44,12 @@
             <div class="flex items-center space-x-2 pb-2 border-b border-slate-100">
                 <span class="flex items-center justify-center bg-indigo-600 text-white rounded-full h-6 w-6 text-xs font-bold">1</span>
                 <h2 class="text-lg font-semibold text-slate-900">Scan Viewport</h2>
-                <span class="ml-auto text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">auto-crop</span>
+                <span class="ml-auto text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">auto‑crop</span>
             </div>
             
-            <!-- Camera preview: no corner borders, only clean video -->
             <div class="relative bg-slate-900 rounded-xl overflow-hidden doc-aspect w-full flex items-center justify-center border border-slate-700 shadow-inner group capture-area">
                 <video id="video" autoplay playsinline class="absolute inset-0 w-full h-full object-cover"></video>
                 
-                <!-- Green flash tick (overlay) -->
                 <div id="capture-tick" class="tick-overlay absolute inset-0 flex items-center justify-center bg-emerald-950/40 opacity-0 pointer-events-none scale-75 z-20 backdrop-blur-[1px]">
                     <div class="bg-white text-emerald-600 p-5 rounded-full shadow-2xl border-4 border-emerald-500 transform transition-transform">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
@@ -66,7 +58,6 @@
                     </div>
                 </div>
 
-                <!-- fallback message -->
                 <div id="camera-fallback" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-slate-400 bg-slate-900 hidden z-10">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -128,6 +119,7 @@
                 <div class="flex items-center space-x-2 pb-2 border-b border-slate-100">
                     <span class="flex items-center justify-center bg-indigo-600 text-white rounded-full h-6 w-6 text-xs font-bold">3</span>
                     <h2 class="text-lg font-semibold text-slate-900">Export PDF</h2>
+                    <span class="ml-auto text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full font-medium">full‑bleed</span>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
@@ -180,11 +172,10 @@
             let targetRetakeIndex = null;
             let dragSourceIndex = null;
 
-            // filename placeholder with date
             const todayStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
             filenameInput.placeholder = `scan_${todayStr}`;
 
-            // ---------- CAMERA INIT ----------
+            // ---------- CAMERA ----------
             async function initCamera() {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({
@@ -202,7 +193,6 @@
             }
             initCamera();
 
-            // flash green tick
             function flashSuccessTick() {
                 captureTick.classList.remove('opacity-0', 'scale-75', 'pointer-events-none');
                 captureTick.classList.add('opacity-100', 'scale-100');
@@ -212,14 +202,13 @@
                 }, 400);
             }
 
-            // ---------- CORE CROP: document area only ----------
+            // ---------- CROP: document area only ----------
             function captureDocumentArea() {
                 if (video.paused || video.ended || !video.videoWidth) return null;
 
                 const vw = video.videoWidth;
                 const vh = video.videoHeight;
 
-                // 1. Create a temp canvas to analyze the frame
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = vw;
                 tempCanvas.height = vh;
@@ -228,21 +217,14 @@
                 const imageData = ctx.getImageData(0, 0, vw, vh);
                 const data = imageData.data;
 
-                // 2. Find bounding box of non‑background content (rough document detection)
-                // We use a simple threshold: if any channel > 30 (not pure black) or luminance > 40
-                // and we also ignore edges that are too close to border (to avoid frame artifacts)
                 let minX = vw, minY = vh, maxX = 0, maxY = 0;
-                const threshold = 35; // luminance threshold
-                const margin = 8; // ignore extreme edges (noise)
+                const threshold = 35;
+                const margin = 8;
 
                 for (let y = margin; y < vh - margin; y++) {
                     for (let x = margin; x < vw - margin; x++) {
                         const idx = (y * vw + x) * 4;
-                        const r = data[idx];
-                        const g = data[idx+1];
-                        const b = data[idx+2];
-                        // luminance approximation
-                        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                        const lum = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
                         if (lum > threshold) {
                             if (x < minX) minX = x;
                             if (y < minY) minY = y;
@@ -252,9 +234,7 @@
                     }
                 }
 
-                // If no document found (all dark/empty), fallback to full frame centered crop (A4 ratio)
                 if (maxX <= minX || maxY <= minY) {
-                    // fallback: center crop with A4 ratio
                     let cropW = vw;
                     let cropH = vw * 1.4142;
                     if (cropH > vh) {
@@ -266,7 +246,6 @@
                     return { sx, sy, cropW, cropH };
                 }
 
-                // Add small padding to bounding box (5px) to avoid cutting text close to edge
                 const pad = 6;
                 minX = Math.max(0, minX - pad);
                 minY = Math.max(0, minY - pad);
@@ -275,33 +254,25 @@
 
                 let cropW = maxX - minX;
                 let cropH = maxY - minY;
-
-                // 3. Adjust to A4 aspect ratio (1:1.4142) while keeping document centered
-                const aspectRatio = 1 / 1.4142; // width/height
+                const aspectRatio = 1 / 1.4142;
                 let finalW = cropW;
                 let finalH = cropH;
 
                 if (cropW / cropH > aspectRatio) {
-                    // too wide: adjust height
                     finalH = cropW / aspectRatio;
                     finalW = cropW;
                 } else {
-                    // too tall: adjust width
                     finalW = cropH * aspectRatio;
                     finalH = cropH;
                 }
 
-                // Center the adjusted crop within the original bounds
                 let sx = minX - (finalW - cropW) / 2;
                 let sy = minY - (finalH - cropH) / 2;
-                // Clamp to image edges
                 sx = Math.max(0, Math.min(vw - finalW, sx));
                 sy = Math.max(0, Math.min(vh - finalH, sy));
-                // Ensure final dimensions fit
                 if (sx + finalW > vw) { finalW = vw - sx; }
                 if (sy + finalH > vh) { finalH = vh - sy; }
                 if (finalW < 10 || finalH < 10) {
-                    // fallback
                     let cropW2 = vw;
                     let cropH2 = vw * 1.4142;
                     if (cropH2 > vh) {
@@ -312,19 +283,15 @@
                     const sy2 = (vh - cropH2) / 2;
                     return { sx: sx2, sy: sy2, cropW: cropW2, cropH: cropH2 };
                 }
-
                 return { sx, sy, cropW: finalW, cropH: finalH };
             }
 
-            // capture and push image
             function captureAndPush() {
                 if (video.paused || video.ended || !video.videoWidth) return;
-
                 flashSuccessTick();
 
                 const rect = captureDocumentArea();
                 if (!rect) return;
-
                 const { sx, sy, cropW, cropH } = rect;
 
                 const canvas = document.createElement('canvas');
@@ -332,14 +299,13 @@
                 canvas.height = cropH;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
-
                 const imgData = canvas.toDataURL('image/jpeg', 0.85);
                 handleImageIngress(imgData);
             }
 
             btnCapture.addEventListener('click', captureAndPush);
 
-            // ---------- FILE UPLOAD HANDLERS ----------
+            // ---------- FILE UPLOAD ----------
             btnUploadTrigger.addEventListener('click', () => {
                 targetRetakeIndex = null;
                 globalUpload.click();
@@ -379,7 +345,7 @@
                 renderGallery();
             }
 
-            // ---------- GALLERY RENDER ----------
+            // ---------- GALLERY ----------
             window.deletePage = function(index) {
                 pagesArray.splice(index, 1);
                 renderGallery();
@@ -396,7 +362,6 @@
                 }
             };
 
-            // drag & drop
             window.handleDragStart = function(e, index) {
                 dragSourceIndex = index;
                 e.dataTransfer.effectAllowed = 'move';
@@ -476,12 +441,12 @@
                 });
             }
 
-            // ---------- PDF EXPORT ----------
+            // ---------- PDF EXPORT: FULL BLEED (no white gap) ----------
             async function compileToPDF() {
                 if (pagesArray.length === 0) return;
                 btnSavePdf.disabled = true;
                 loadingSpinner.classList.remove('hidden');
-                btnSaveText.textContent = "Compiling...";
+                btnSaveText.textContent = "Rendering...";
 
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF('p', 'pt', 'a4');
@@ -492,32 +457,47 @@
                     for (let i = 0; i < pagesArray.length; i++) {
                         if (i > 0) pdf.addPage();
 
+                        // Create a wrapper that exactly matches PDF size, no padding.
                         const wrapper = document.createElement('div');
-                        wrapper.style.width = '595px';
-                        wrapper.style.height = '842px';
+                        wrapper.style.width = pdfWidth + 'px';
+                        wrapper.style.height = pdfHeight + 'px';
                         wrapper.style.display = 'flex';
                         wrapper.style.alignItems = 'center';
                         wrapper.style.justifyContent = 'center';
                         wrapper.style.backgroundColor = '#ffffff';
+                        wrapper.style.overflow = 'hidden';
+                        wrapper.style.margin = '0';
+                        wrapper.style.padding = '0';
 
                         const img = document.createElement('img');
                         img.src = pagesArray[i].src;
-                        img.style.maxWidth = '100%';
-                        img.style.maxHeight = '100%';
-                        img.style.objectFit = 'contain';
+                        // Use 'cover' to fill the entire container without distortion,
+                        // ensuring no white gaps (image will be cropped if aspect differs)
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'cover';
+                        img.style.display = 'block';
                         wrapper.appendChild(img);
                         renderSandbox.appendChild(wrapper);
 
                         const canvas = await html2canvas(wrapper, {
-                            scale: 2,
+                            scale: 2.5,          // high quality
                             useCORS: true,
                             logging: false,
-                            backgroundColor: '#ffffff'
+                            backgroundColor: '#ffffff',
+                            width: pdfWidth,
+                            height: pdfHeight,
+                            onclone: (doc) => {
+                                // ensure no extra margins
+                            }
                         });
+
                         renderSandbox.removeChild(wrapper);
-                        const data = canvas.toDataURL('image/jpeg', 0.75);
+                        const data = canvas.toDataURL('image/jpeg', 0.82);
+                        // Add image to PDF with exact dimensions (no margin)
                         pdf.addImage(data, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
                     }
+
                     let fname = filenameInput.value.trim() || filenameInput.placeholder;
                     if (!fname.toLowerCase().endsWith('.pdf')) fname += '.pdf';
                     pdf.save(fname);
